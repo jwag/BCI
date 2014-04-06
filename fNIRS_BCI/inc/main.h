@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    SysTick/main.h 
+  * @file    SysTick/main.h
   * @author  MCD Application Team
   * @version V1.0.0
   * @date    19-September-2011
@@ -16,8 +16,8 @@
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
   * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
-  ******************************************************************************  
-  */ 
+  ******************************************************************************
+  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
@@ -30,6 +30,9 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
+/* Exported variables ------------------------------------------------------- */
+extern __IO uint16_t ADC3ConvertedValue;
+extern __IO uint32_t ADC3ConvertedVoltage;
 void TimingDelay_Decrement(void);
 
 #endif /* __MAIN_H */
