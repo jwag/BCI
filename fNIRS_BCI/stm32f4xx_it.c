@@ -140,8 +140,13 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   TimingDelay_Decrement();
-    /* convert the ADC value (from 0 to 0xFFF) to a voltage value (from 0V to 3.3V)*/
-    ADC3ConvertedVoltage = ADC3ConvertedValue *3300/0xFFF;
+  if(ADC3ConvertedValues[1] != 0xFFFF)
+  {
+        /* convert the ADC value (from 0 to 0xFFF) to a voltage value (from 0V to 3.3V)*/
+        ADC3ConvertedVoltages[0] = ADC3ConvertedValues[0] *3300/0xFFF;
+        ADC3ConvertedVoltages[1] = ADC3ConvertedValues[1] *3300/0xFFF;
+        ADC3ConvertedValues[1] = 0xFFFF;
+  }
 }
 
 /******************************************************************************/

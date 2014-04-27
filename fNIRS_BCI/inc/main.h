@@ -28,11 +28,12 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
+#define NUM_SENSORS
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 /* Exported variables ------------------------------------------------------- */
-extern __IO uint16_t ADC3ConvertedValue;
-extern __IO uint32_t ADC3ConvertedVoltage;
+extern __IO uint16_t ADC3ConvertedValues[NUM_SENSORS];
+extern __IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS];
 void TimingDelay_Decrement(void);
 
 #endif /* __MAIN_H */
