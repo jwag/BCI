@@ -133,6 +133,7 @@ int main(void)
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 
   TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+  TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
 
   /* PWM1 Mode configuration: Channel1 */
   TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
@@ -170,8 +171,30 @@ int main(void)
 
   TIM_ARRPreloadConfig(TIM3, ENABLE);
 
+  //TIM2 Config
+
+    /* PWM1 Mode configuration: Channel3 */
+  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+  TIM_OCInitStructure.TIM_Pulse = CCR1_Val;
+  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+
+  TIM_OC1Init(TIM2, &TIM_OCInitStructure);
+
+  TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);
+
+  /* PWM1 Mode configuration: Channel4 */
+  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+  TIM_OCInitStructure.TIM_Pulse = CCR2_Val;
+
+  TIM_OC2Init(TIM2, &TIM_OCInitStructure);
+
+  TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
+
   /* TIM3 enable counter */
   TIM_Cmd(TIM3, ENABLE);
+  /* TIM2 enable counter */
+  TIM_Cmd(TIM2, ENABLE);
 
   /* Setup SysTick Timer for 1 msec interrupts.
      ------------------------------------------
@@ -324,7 +347,7 @@ void ADC3_CH12_DMA_Config(void)
 }
 
 /**
-  * @brief  Configure the TIM3 Ouput Channels.
+  * @brief  Configure the TIM3 and TIM2 Ouput Channels.
   * @param  None
   * @retval None
   */
@@ -332,8 +355,8 @@ void TIM_Config(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
 
-  /* TIM3 clock enable */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+  /* TIM3 and TIM2 clock enable */
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM2, ENABLE);
 
   /* GPIOC and GPIOB clock enable */
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOB, ENABLE);
@@ -346,8 +369,8 @@ void TIM_Config(void)
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-  /* GPIOB Configuration:  TIM3 CH3 (PB0) and TIM3 CH4 (PB1) */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+  /* GPIOB Configuration:  TIM3 CH3 (PB0) and TIM3 CH4 (PB1) and TIM2 CH3 (PB10) and TIM2 CH4 (PB11)*/
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_10 | GPIO_Pin_11;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -359,6 +382,9 @@ void TIM_Config(void)
   GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3);
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource1, GPIO_AF_TIM3);
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_TIM2);
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_TIM2);
+
 }
 
 #ifdef  USE_FULL_ASSERT
