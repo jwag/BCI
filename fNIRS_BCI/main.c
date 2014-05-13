@@ -495,14 +495,7 @@ void init_USART1(uint32_t baudrate){
  * */
 void USART_puts(USART_TypeDef* USARTx, uint8_t volatile *s){
 
-    uint8_t i = 1;
-    static uint8_t j = 49;
-	while(i!=5){
-		// wait until data register is empty
-		while( !(USARTx->SR & 0x00000040) );
-		USART_SendData(USARTx,j);
-		i++;
-	}
+    USART_SendData(USARTx,(uint16_t)'a');
 }
 
 
