@@ -91,6 +91,8 @@ int main(void)
   /* Start ADC3 Software Conversion */
   ADC_SoftwareStartConv(ADC3);
 
+  DMA_ITConfig(DMA2_Stream0,DMA_IT_TC,ENABLE);
+
   /* TIM Configuration */
   TIM_Config();
 
@@ -344,6 +346,15 @@ void ADC3_CH12_DMA_Config(void)
 
   /* Enable ADC3 */
   ADC_Cmd(ADC3, ENABLE);
+
+  NVIC_InitTypeDef NVIC_InitStructure;
+  //Enable DMA2 channel IRQ Channel */
+  NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
 }
 
 /**

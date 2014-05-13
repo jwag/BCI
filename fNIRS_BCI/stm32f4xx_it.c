@@ -140,12 +140,18 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   TimingDelay_Decrement();
-  if(ADC3ConvertedValues[1] != 0xFFFF)
+}
+
+void DMA2_Stream0_IRQHandler(void)
+{
+  //Test on DMA1 Channel1 Transfer Complete interrupt
+  if(DMA_GetITStatus(DMA2_Stream0,DMA_IT_TCIF0))
   {
-        /* convert the ADC value (from 0 to 0xFFF) to a voltage value (from 0V to 3.3V)*/
-        ADC3ConvertedVoltages[0] = ADC3ConvertedValues[0] *3300/0xFFF;
-        ADC3ConvertedVoltages[1] = ADC3ConvertedValues[1] *3300/0xFFF;
-        ADC3ConvertedValues[1] = 0xFFFF;
+    /* convert the ADC value (from 0 to 0xFFF) to a voltage value (from 0V to 3.3V)*/
+    ADC3ConvertedVoltages[0] = ADC3ConvertedValues[0] *3300/0xFFF;
+    ADC3ConvertedVoltages[1] = ADC3ConvertedValues[1] *3300/0xFFF;
+     //Clear DMA2 Stream0 Transfer Complete interrupt pending bits
+    DMA_ClearITPendingBit(DMA2_Stream0,DMA_IT_TCIF0);
   }
 }
 
