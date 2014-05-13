@@ -29,12 +29,16 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 #define NUM_SENSORS
+#define MAX_STRLEN 12 // this is the maximum string length of our string in characters
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 /* Exported variables ------------------------------------------------------- */
 extern __IO uint16_t ADC3ConvertedValues[NUM_SENSORS];
 extern __IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS];
 void TimingDelay_Decrement(void);
+void init_USART1(uint32_t baudrate);
+void USART_puts(USART_TypeDef* USARTx, volatile const char *s);
+extern volatile char received_string[];
 
 #endif /* __MAIN_H */
 
