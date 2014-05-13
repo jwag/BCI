@@ -38,7 +38,8 @@ extern __IO uint16_t ADC3ConvertedValues[NUM_SENSORS];
 extern __IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS];
 void TimingDelay_Decrement(void);
 void init_USART1(uint32_t baudrate);
-void USART_puts(USART_TypeDef* USARTx, volatile char *s);
+void USART_puts_chars(USART_TypeDef* USARTx, volatile char *s);
+void USART_puts_ints(USART_TypeDef* USARTx, uint8_t *data, uint8_t length);
 extern volatile char received_string[];
 
 #endif /* __MAIN_H */

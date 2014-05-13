@@ -21,28 +21,18 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-/** @addtogroup STM32F4_Discovery_Peripheral_Examples
-  * @{
-  */
-
-/** @addtogroup SysTick_Example
-  * @{
-  */
-
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* You can monitor the converted value by adding the variable "ADC3ConvertedValue_left"
-   to the debugger watch window */
+// ADC Variables
 __IO uint16_t ADC3ConvertedValues[NUM_SENSORS] = {0xFFFF, 0xFFFF};
 __IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS] = {0xFFFF, 0xFFFF};
 GPIO_InitTypeDef GPIO_InitStructure;
 static __IO uint32_t TimingDelay;
 volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
-// PWM stuff
+// PWM Setup Constants
 TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 TIM_OCInitTypeDef  TIM_OCInitStructure;
 uint16_t CCR1_Val = 333;
@@ -54,15 +44,12 @@ uint16_t PrescalerValue = 0;
 /* Private function prototypes -----------------------------------------------*/
 void Delay(__IO uint32_t nTime);
 void TIM_Config(void);
+void ADC3_CH12_DMA_Config(void);
+void PWM_Config();
 
 /* Private functions ---------------------------------------------------------*/
-void ADC3_CH12_DMA_Config(void);
 
-/**
-  * @brief   Main program
-  * @param  None
-  * @retval None
-  */
+//***************************************************************************************
 int main(void)
 {
   /*!< At this stage the microcontroller clock setting is already configured,
@@ -82,6 +69,12 @@ int main(void)
   STM_EVAL_LEDOn(LED4);
   STM_EVAL_LEDOn(LED5);
 
+  init_USART1(9600); // initialize USART1 @ 9600 baud
+
+  char hello[]  = "Init complete! Hello World!/n";
+  USART_puts_chars(USART1, hello); // just send a message to indicate that it works
+
+
   /* ADC3 configuration *******************************************************/
   /*  - Enable peripheral clocks                                              */
   /*  - DMA2_Stream0 channel2 configuration                                   */
@@ -97,107 +90,7 @@ int main(void)
   /* TIM Configuration */
   TIM_Config();
 
-    /* -----------------------------------------------------------------------
-    TIM3 Configuration: generate 4 PWM signals with 4 different duty cycles.
-
-    In this example TIM3 input clock (TIM3CLK) is set to 2 * APB1 clock (PCLK1),
-    since APB1 prescaler is different from 1.
-      TIM3CLK = 2 * PCLK1
-      PCLK1 = HCLK / 4
-      => TIM3CLK = HCLK / 2 = SystemCoreClock /2
-
-    To get TIM3 counter clock at 28 MHz, the prescaler is computed as follows:
-       Prescaler = (TIM3CLK / TIM3 counter clock) - 1
-       Prescaler = ((SystemCoreClock /2) /28 MHz) - 1
-
-    To get TIM3 output clock at 30 KHz, the period (ARR)) is computed as follows:
-       ARR = (TIM3 counter clock / TIM3 output clock) - 1
-           = 665
-
-    TIM3 Channel1 duty cycle = (TIM3_CCR1/ TIM3_ARR)* 100 = 50%
-    TIM3 Channel2 duty cycle = (TIM3_CCR2/ TIM3_ARR)* 100 = 37.5%
-    TIM3 Channel3 duty cycle = (TIM3_CCR3/ TIM3_ARR)* 100 = 25%
-    TIM3 Channel4 duty cycle = (TIM3_CCR4/ TIM3_ARR)* 100 = 12.5%
-
-    Note:
-     SystemCoreClock variable holds HCLK frequency and is defined in system_stm32f4xx.c file.
-     Each time the core clock (HCLK) changes, user had to call SystemCoreClockUpdate()
-     function to update SystemCoreClock variable value. Otherwise, any configuration
-     based on this variable will be incorrect.
-  ----------------------------------------------------------------------- */
-
-  /* Compute the prescaler value */
-  PrescalerValue = (uint16_t) ((SystemCoreClock /2) / 28000000) - 1;
-
-  /* Time base configuration */
-  TIM_TimeBaseStructure.TIM_Period = 665;
-  TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
-  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-
-  TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
-  TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
-
-  /* PWM1 Mode configuration: Channel1 */
-  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR1_Val;
-  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-
-  TIM_OC1Init(TIM3, &TIM_OCInitStructure);
-
-  TIM_OC1PreloadConfig(TIM3, TIM_OCPreload_Enable);
-
-  /* PWM1 Mode configuration: Channel2 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR2_Val;
-
-  TIM_OC2Init(TIM3, &TIM_OCInitStructure);
-
-  TIM_OC2PreloadConfig(TIM3, TIM_OCPreload_Enable);
-
-  /* PWM1 Mode configuration: Channel3 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR3_Val;
-
-  TIM_OC3Init(TIM3, &TIM_OCInitStructure);
-
-  TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
-
-  /* PWM1 Mode configuration: Channel4 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR4_Val;
-
-  TIM_OC4Init(TIM3, &TIM_OCInitStructure);
-
-  TIM_OC4PreloadConfig(TIM3, TIM_OCPreload_Enable);
-
-  TIM_ARRPreloadConfig(TIM3, ENABLE);
-
-  //TIM4 Config
-
-    /* PWM1 Mode configuration: Channel3 */
-  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR1_Val;
-  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-
-  TIM_OC1Init(TIM2, &TIM_OCInitStructure);
-
-  TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);
-
-  /* PWM1 Mode configuration: Channel4 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR2_Val;
-
-  TIM_OC2Init(TIM2, &TIM_OCInitStructure);
-
-  TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
-
-  /* TIM3 enable counter */
-  TIM_Cmd(TIM3, ENABLE);
-  /* TIM2 enable counter */
-  TIM_Cmd(TIM2, ENABLE);
+  PWM_Config();
 
   /* Setup SysTick Timer for 1 msec interrupts.
      ------------------------------------------
@@ -231,8 +124,6 @@ int main(void)
     while (1);
   }
 
-  init_USART1(9600); // initialize USART1 @ 9600 baud
-
   while (1)
   {
     /* Toggle LED3 and LED6 */
@@ -246,14 +137,11 @@ int main(void)
     STM_EVAL_LEDToggle(LED4);
     STM_EVAL_LEDToggle(LED5);
 
-    char hello[]  = "Init complete! Hello World!rn";
-  USART_puts(USART1, hello); // just send a message to indicate that it works
-
-    /* Insert 1000 ms delay */
-    Delay(1000);
+    /* Insert 100 ms delay */
+    Delay(100);
   }
 }
-
+//***************************************************************************************
 /**
   * @brief  Inserts a delay time.
   * @param  nTime: specifies the delay time length, in milliseconds.
@@ -265,7 +153,7 @@ void Delay(__IO uint32_t nTime)
 
   while(TimingDelay != 0);
 }
-
+//***************************************************************************************
 /**
   * @brief  Decrements the TimingDelay variable.
   * @param  None
@@ -278,7 +166,7 @@ void TimingDelay_Decrement(void)
     TimingDelay--;
   }
 }
-
+//***************************************************************************************
 
 /**
   * @brief  ADC3 channel12 with DMA configuration
@@ -340,9 +228,9 @@ void ADC3_CH12_DMA_Config(void)
 
   /* ADC3 regular channel12 configuration *************************************/
   // Pin PC2
-  ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 1, ADC_SampleTime_3Cycles);
+  ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 1, ADC_SampleTime_480Cycles);
   // Pin PC3
-  ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 2, ADC_SampleTime_3Cycles);
+  ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 2, ADC_SampleTime_480Cycles);
 
  /* Enable DMA request after last transfer (Single-ADC mode) */
   ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);
@@ -362,7 +250,7 @@ void ADC3_CH12_DMA_Config(void)
   NVIC_Init(&NVIC_InitStructure);
 
 }
-
+//***************************************************************************************
 /**
   * @brief  Configure the TIM3 and TIM2 Ouput Channels.
   * @param  None
@@ -370,38 +258,146 @@ void ADC3_CH12_DMA_Config(void)
   */
 void TIM_Config(void)
 {
-  GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;
 
-  /* TIM3 and TIM2 clock enable */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM2, ENABLE);
+    /* TIM3 and TIM2 clock enable */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM2, ENABLE);
 
-  /* GPIOC and GPIOB clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOB, ENABLE);
+    /* GPIOC and GPIOB clock enable */
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOB, ENABLE);
 
-  /* GPIOC Configuration: TIM3 CH1 (PC6) and TIM3 CH2 (PC7) */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 ;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
+    /* GPIOC Configuration: TIM3 CH1 (PC6) and TIM3 CH2 (PC7) */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 ;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-  /* GPIOB Configuration:  TIM3 CH3 (PB0) and TIM3 CH4 (PB1) and TIM2 CH3 (PB10) and TIM2 CH4 (PB11)*/
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_10 | GPIO_Pin_11;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+    /* GPIOB Configuration:  TIM3 CH3 (PB0) and TIM3 CH4 (PB1) and TIM2 CH3 (PB10) and TIM2 CH4 (PB11)*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_10 | GPIO_Pin_11;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
 
-  /* Connect TIM3 pins to AF2 */
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_TIM3);
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource1, GPIO_AF_TIM3);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_TIM2);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_TIM2);
+    /* Connect TIM3 pins to AF2 */
+    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_TIM3);
+    GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource0, GPIO_AF_TIM3);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource1, GPIO_AF_TIM3);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_TIM2);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_TIM2);
 
+}
+//***************************************************************************************
+void PWM_Config()
+{
+    /* -----------------------------------------------------------------------
+    TIM3 Configuration: generate 4 PWM signals with 4 different duty cycles.
+
+    In this example TIM3 input clock (TIM3CLK) is set to 2 * APB1 clock (PCLK1),
+    since APB1 prescaler is different from 1.
+      TIM3CLK = 2 * PCLK1
+      PCLK1 = HCLK / 4
+      => TIM3CLK = HCLK / 2 = SystemCoreClock /2
+
+    To get TIM3 counter clock at 28 MHz, the prescaler is computed as follows:
+       Prescaler = (TIM3CLK / TIM3 counter clock) - 1
+       Prescaler = ((SystemCoreClock /2) /28 MHz) - 1
+
+    To get TIM3 output clock at 30 KHz, the period (ARR)) is computed as follows:
+       ARR = (TIM3 counter clock / TIM3 output clock) - 1
+           = 665
+
+    TIM3 Channel1 duty cycle = (TIM3_CCR1/ TIM3_ARR)* 100 = 50%
+    TIM3 Channel2 duty cycle = (TIM3_CCR2/ TIM3_ARR)* 100 = 37.5%
+    TIM3 Channel3 duty cycle = (TIM3_CCR3/ TIM3_ARR)* 100 = 25%
+    TIM3 Channel4 duty cycle = (TIM3_CCR4/ TIM3_ARR)* 100 = 12.5%
+
+    Note:
+     SystemCoreClock variable holds HCLK frequency and is defined in system_stm32f4xx.c file.
+     Each time the core clock (HCLK) changes, user had to call SystemCoreClockUpdate()
+     function to update SystemCoreClock variable value. Otherwise, any configuration
+     based on this variable will be incorrect.
+    ----------------------------------------------------------------------- */
+
+    /* Compute the prescaler value */
+    PrescalerValue = (uint16_t) ((SystemCoreClock /2) / 28000000) - 1;
+
+    /* Time base configuration */
+    TIM_TimeBaseStructure.TIM_Period = 665;
+    TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+
+    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+
+    /* Compute the prescaler value */
+    //PrescalerValue = (uint16_t) ((SystemCoreClock ) / 28000000) - 1;
+    //TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
+    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+
+    /* PWM1 Mode configuration: Channel1 */
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = CCR1_Val;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+
+    TIM_OC1Init(TIM3, &TIM_OCInitStructure);
+
+    TIM_OC1PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+    /* PWM1 Mode configuration: Channel2 */
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = CCR2_Val;
+
+    TIM_OC2Init(TIM3, &TIM_OCInitStructure);
+
+    TIM_OC2PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+    /* PWM1 Mode configuration: Channel3 */
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = CCR3_Val;
+
+    TIM_OC3Init(TIM3, &TIM_OCInitStructure);
+
+    TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+    /* PWM1 Mode configuration: Channel4 */
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = CCR4_Val;
+
+    TIM_OC4Init(TIM3, &TIM_OCInitStructure);
+
+    TIM_OC4PreloadConfig(TIM3, TIM_OCPreload_Enable);
+
+    TIM_ARRPreloadConfig(TIM3, ENABLE);
+
+    //TIM4 Config
+    /* PWM1 Mode configuration: Channel3 */
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = 50;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+
+    TIM_OC1Init(TIM2, &TIM_OCInitStructure);
+
+    TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);
+
+    /* PWM1 Mode configuration: Channel4 */
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = 50;
+
+    TIM_OC2Init(TIM2, &TIM_OCInitStructure);
+
+    TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
+
+    /* TIM3 enable counter */
+    TIM_Cmd(TIM3, ENABLE);
+    /* TIM2 enable counter */
+    TIM_Cmd(TIM2, ENABLE);
 }
 
 /* This funcion initializes the USART1 peripheral
@@ -493,8 +489,8 @@ void init_USART1(uint32_t baudrate){
  * Note 2: At the moment it takes a volatile char because the received_string variable
  * 		   declared as volatile char --> otherwise the compiler will spit out warnings
  * */
-void USART_puts(USART_TypeDef* USARTx, volatile char *s){
-
+void USART_puts_chars(USART_TypeDef* USARTx, volatile char *s)
+{
 	while(*s){
 		// wait until data register is empty
 		while( !(USARTx->SR & 0x00000040) );
@@ -503,6 +499,18 @@ void USART_puts(USART_TypeDef* USARTx, volatile char *s){
 	}
 }
 
+
+// Sends 8 bit integers over serial.  Note one may send a float, but it must
+// be cast and a uint8_t and reproceessed on the other end.
+void USART_puts_ints(USART_TypeDef* USARTx, uint8_t *data, uint8_t length)
+{
+	for(uint8_t i = 0;i<length;i++)
+    {
+		// wait until data register is empty
+		while( !(USARTx->SR & 0x00000040) );
+		USART_SendData(USARTx, data[i]);
+	}
+}
 
 #ifdef  USE_FULL_ASSERT
 

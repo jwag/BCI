@@ -152,6 +152,25 @@ void DMA2_Stream0_IRQHandler(void)
     ADC3ConvertedVoltages[1] = ADC3ConvertedValues[1] *3300/0xFFF;
      //Clear DMA2 Stream0 Transfer Complete interrupt pending bits
     DMA_ClearITPendingBit(DMA2_Stream0,DMA_IT_TCIF0);
+
+    static char sensor1[] = "SENSOR1  ";
+    static char sensor2[] = "SENSOR2  ";
+    static uint8_t linefeed = 10;
+    static uint8_t decimation = 10;
+    static uint8_t count = 0;
+    //USART_puts_chars(USART1,sensor1);
+    if(count == decimation)
+    {
+        USART_puts_ints(USART1, (uint8_t*)ADC3ConvertedVoltages, 2);
+        //USART_puts_ints(USART1,&linefeed,1);
+        //USART_puts_chars(USART1,sensor2);
+        //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);
+        //USART_puts_ints(USART1,&linefeed,1);
+        count = 0;
+    }
+    else
+    { count++; }
+
   }
 }
 
@@ -173,7 +192,7 @@ void USART1_IRQHandler(void){
 		}
 		else{ // otherwise reset the character counter and print the received string
 			cnt = 0;
-			USART_puts(USART1, received_string);
+			USART_puts_chars(USART1, received_string);
 		}
 	}
 }
