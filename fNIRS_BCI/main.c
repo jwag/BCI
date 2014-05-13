@@ -171,7 +171,7 @@ int main(void)
 
   TIM_ARRPreloadConfig(TIM3, ENABLE);
 
-  //TIM2 Config
+  //TIM4 Config
 
     /* PWM1 Mode configuration: Channel3 */
   TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
