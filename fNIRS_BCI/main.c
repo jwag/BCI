@@ -41,7 +41,7 @@ __IO uint16_t ADC3ConvertedValues[NUM_SENSORS] = {0xFFFF, 0xFFFF};
 __IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS] = {0xFFFF, 0xFFFF};
 GPIO_InitTypeDef GPIO_InitStructure;
 static __IO uint32_t TimingDelay;
-volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
+volatile uint8_t received_string[MAX_STRLEN+1]; // this will hold the recieved string
 // PWM stuff
 TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 TIM_OCInitTypeDef  TIM_OCInitStructure;
@@ -233,6 +233,7 @@ int main(void)
 
   init_USART1(9600); // initialize USART1 @ 9600 baud
 
+  uint8_t hello[] = { 1, 2, 3, 4, 5};
   while (1)
   {
     /* Toggle LED3 and LED6 */
@@ -246,7 +247,7 @@ int main(void)
     STM_EVAL_LEDToggle(LED4);
     STM_EVAL_LEDToggle(LED5);
 
-    USART_puts(USART1, "Init complete! Hello World!rn"); // just send a message to indicate that it works
+    USART_puts(USART1, hello); // just send a message to indicate that it works
 
     /* Insert 100 ms delay */
     Delay(100);
@@ -492,13 +493,15 @@ void init_USART1(uint32_t baudrate){
  * Note 2: At the moment it takes a volatile char because the received_string variable
  * 		   declared as volatile char --> otherwise the compiler will spit out warnings
  * */
-void USART_puts(USART_TypeDef* USARTx, volatile const char *s){
+void USART_puts(USART_TypeDef* USARTx, uint8_t volatile *s){
 
-	while(*s){
+    uint8_t i = 1;
+    static uint8_t j = 49;
+	while(i!=5){
 		// wait until data register is empty
 		while( !(USARTx->SR & 0x00000040) );
-		USART_SendData(USARTx, *s);
-		*s++;
+		USART_SendData(USARTx,j);
+		i++;
 	}
 }
 
