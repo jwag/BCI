@@ -42,7 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-
+end
 
 % --- Executes just before fNIRS_GUI_1 is made visible.
 function fNIRS_GUI_1_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -51,21 +51,23 @@ function fNIRS_GUI_1_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to fNIRS_GUI_1 (see VARARGIN)
-global y x
-x = 0:.1:3*pi; % Make up some data and plot
-y = sin(x);
-handles.plot = plot(handles.axes1,x,y);
-handles.timer = timer('ExecutionMode','fixedRate',...
-                    'Period', 0.5,...
-                    'TimerFcn', {@GUIUpdate,handles});
-handles.output = hObject;
-guidata(hObject, handles);
-% Update handles structure
-guidata(hObject, handles);
-
+    global y t
+    t = 0;
+    y = 0;
+    handles.plot = plot(t,y,'YDataSource','y','XDataSource','t');
+    s1 = serial('COM29','BaudRate',9600,'DataBits',8,'Parity','None','FlowControl','None','StopBits',1);
+    s1.BytesAvailableFcnCount = 40;
+    s1.BytesAvailableFcnMode = 'byte';
+    s1.BytesAvailableFcn = @(src, event) mycallback(src, event, hObject);
+    fopen(s1);
+    handles.serialport = s1;
+    handles.inputdata = uint8([]);
+    handles.output = hObject;
+    % Update handles structure
+    guidata(hObject, handles);
 % UIWAIT makes fNIRS_GUI_1 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-
+end
 
 % --- Outputs from this function are returned to the command line.
 function varargout = fNIRS_GUI_1_OutputFcn(hObject, eventdata, handles) 
@@ -75,17 +77,37 @@ function varargout = fNIRS_GUI_1_OutputFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get default command line output from handles structure
-varargout{1} = handles.output;
+    varargout{1} = handles.output;
+end
 
 % --- Executes on button press in startButton.
 function startButton_Callback(hObject, eventdata, handles)
-global y x
-start(handles.timer)
-for i =1:30
-   y = sin(x+i/10); 
-   pause(1) 
+    while true
+       pause(.1); %give callback a chance to read some data
+       handles = guidata(hObject); %The callback might have changed the values
+       currentdata = handles.inputdata; %read pending data
+       handles.inputdata = uint8([]); %clear pending data
+       %now do something with the currentdata
+       data = uint8(currentdata);
+       data2=uint16(zeros(2,1));
+       data2(1)=typecast(data(1:2),'uint16');
+       data2(2)=typecast(data(3:4),'uint16');
+       t = get(handles.plot,'XData');
+       y = get(handles.plot,'YData');
+       y = [y data2(1)];
+       t = [t (t(end)+1)];
+       set(handles.plot,'XData',t,'YData',y);
+       refreshdata(handles.plot,'caller') 
+       %drawnow
+       % Update handles structure
+       guidata(hObject, handles);
+    end
 end
 
-function GUIUpdate(obj,event,handles)
-global y 
-set(handles.plot,'ydata',y);
+function mycallback(src, event, FigureObject)
+    handles = guidata(FigureObject);
+    s1 = handles.serialport;
+    thisdata = fread(s1, s1.BytesAvailable);
+    handles.inputdata = [handles.inputdata; uint8(thisdata)];
+    guidata(FigureObject, handles);
+end
