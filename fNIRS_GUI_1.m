@@ -99,8 +99,8 @@ function Start_Callback(hObject, eventdata, handles)
        start_index = find_start(handles.inputdata);
        if(start_index ~= -1 && length(currentdata)>1)
            data = uint8(currentdata);
-           data2=uint32(zeros(4,1));
-           data2(1)=typecast(data(start_index:start_index+3),'uint32');
+           data2=uint16(zeros(1,1));
+           data2(1)=typecast(data(start_index:start_index+1),'uint16');
            if(data2(1)<3300)
                handles.inputdata = currentdata(start_index+2:end); %clear data we are using
                %data2(2)=typecast(data(3:4),'uint16');

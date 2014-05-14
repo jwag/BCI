@@ -24,6 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
 #include "main.h"
+#include "stdio.h"
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
   * @{
@@ -158,11 +159,18 @@ void DMA2_Stream0_IRQHandler(void)
     static char volatile start_packet[] = "<({";
     static uint8_t decimation = 10;
     static uint8_t count = 0;
+    static char retnum[2];
     //USART_puts_chars(USART1,sensor1);
     if(count == decimation)
     {
         USART_puts_chars(USART1,start_packet);
-        USART_puts_ints(USART1, (uint8_t*)ADC3ConvertedValues, 4);
+        uint32_t size = sizeof(uint16_t);
+        //sprintf( retnum, "%u", ADC3ConvertedValues[0] );
+        uint16_t test = 350;
+        uint8_t * test_ptr = (uint8_t*)&test;
+        uint16_t val = ADC3ConvertedValues[0];
+        USART_puts_ints(USART1,(uint8_t*)&val,size);
+        //USART_puts_chars(USART1, retnum);
         //USART_puts_chars(USART1,sensor2);
         //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);
         //USART_puts_ints(USART1,&linefeed,1);

@@ -504,7 +504,7 @@ void USART_puts_chars(USART_TypeDef* USARTx, volatile char *s)
 // be cast and a uint8_t and reproceessed on the other end.
 void USART_puts_ints(USART_TypeDef* USARTx, uint8_t *data, uint8_t length)
 {
-	for(uint8_t i = 0;i<length;i++)
+	for(int8_t i = length-1;i >=0;--i)
     {
 		// wait until data register is empty
 		while( !(USARTx->SR & 0x00000040) );
