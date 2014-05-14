@@ -154,22 +154,38 @@ void DMA2_Stream0_IRQHandler(void)
      //Clear DMA2 Stream0 Transfer Complete interrupt pending bits
     DMA_ClearITPendingBit(DMA2_Stream0,DMA_IT_TCIF0);
 
+    static volatile uint16_t val = 0;
+    static uint16_t val1 = 0;
     static char sensor1[] = "SENSOR1  ";
     static char sensor2[] = "SENSOR2  ";
     static char volatile start_packet[] = "<({";
-    static uint8_t decimation = 10;
+    static uint8_t decimation = 100;
     static uint8_t count = 0;
+    static uint8_t count2 = 10;
     static char retnum[2];
     //USART_puts_chars(USART1,sensor1);
     if(count == decimation)
     {
-        USART_puts_chars(USART1,start_packet);
+        if(count2 == 10)
+        {
+            USART_puts_chars(USART1,start_packet);
+            count2 = 0;
+        }
+        else
+        {
+            count2++;
+        }
         uint32_t size = sizeof(uint16_t);
         //sprintf( retnum, "%u", ADC3ConvertedValues[0] );
         uint16_t test = 350;
         uint8_t * test_ptr = (uint8_t*)&test;
-        uint16_t val = ADC3ConvertedValues[0];
+        val = ADC3ConvertedValues[0];
         USART_puts_ints(USART1,(uint8_t*)&val,size);
+        val1=val1+100;
+        if(val1 >= 65000)
+        {
+          val1 = 0;
+        }
         //USART_puts_chars(USART1, retnum);
         //USART_puts_chars(USART1,sensor2);
         //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);

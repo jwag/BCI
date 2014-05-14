@@ -64,6 +64,7 @@ function fNIRS_GUI_1_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.serialport = s1;
     handles.inputdata = uint8([]);
     handles.output = hObject;
+    handles.counter = 0;
     % Update handles structure
     guidata(hObject, handles);
 % UIWAIT makes fNIRS_GUI_1 wait for user response (see UIRESUME)
@@ -97,21 +98,23 @@ function Start_Callback(hObject, eventdata, handles)
        currentdata = handles.inputdata; %read pending data
        %now do something with the currentdata
        start_index = find_start(handles.inputdata);
-       if(start_index ~= -1 && length(currentdata)>1)
-           data = uint8(currentdata);
-           data2=uint16(zeros(1,1));
-           data2(1)=typecast(data(start_index:start_index+1),'uint16');
-           if(data2(1)<3300)
-               handles.inputdata = currentdata(start_index+2:end); %clear data we are using
+       if(start_index ~= -1 && length(currentdata)>23)
+           if(handles.counter == 10)
+               data = uint8(currentdata);
+               data2=uint16(zeros(10,1));
+               data2=typecast(data(start_index:start_index+19),'uint16');
+               handles.inputdata = currentdata(start_index+20:end); %clear data we are using
                %data2(2)=typecast(data(3:4),'uint16');
                t = get(handles.plot,'XData');
                y = get(handles.plot,'YData');
-               y = [y data2(1)];
-               t = [t (t(end)+1)];
+               y = [y data2'];
+               temp_time = linspace(t(end),t(end)+9,10);
+               t = [t temp_time];
                set(handles.plot,'XData',t,'YData',y);
                refreshdata(handles.plot,'caller')
            else
-               handles.inputdata = currentdata(start_index+2:end);
+               handles.inputdata = currentdata(start_index+10:end);
+               handles.counter = handles.counter+1;
            end
        end
        %drawnow
