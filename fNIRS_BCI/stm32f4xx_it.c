@@ -155,14 +155,14 @@ void DMA2_Stream0_IRQHandler(void)
 
     static char sensor1[] = "SENSOR1  ";
     static char sensor2[] = "SENSOR2  ";
-    static uint8_t linefeed = 10;
+    static char volatile start_packet[] = "<({";
     static uint8_t decimation = 10;
     static uint8_t count = 0;
     //USART_puts_chars(USART1,sensor1);
     if(count == decimation)
     {
+        USART_puts_chars(USART1,start_packet);
         USART_puts_ints(USART1, (uint8_t*)ADC3ConvertedVoltages, 2);
-        //USART_puts_ints(USART1,&linefeed,1);
         //USART_puts_chars(USART1,sensor2);
         //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);
         //USART_puts_ints(USART1,&linefeed,1);
