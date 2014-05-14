@@ -85,6 +85,7 @@ end
 function Start_Callback(hObject, eventdata, handles)
     handles.graph = true;
     status = get(handles.serialport,'Status');
+    handles.inputdata = uint8([]); %clear pending data
     if~strcmp(status,'open')
         handles.serialport.BytesAvailableFcn = @(src, event) mycallback(src, event, hObject);
         fopen(handles.serialport);
@@ -98,16 +99,20 @@ function Start_Callback(hObject, eventdata, handles)
        start_index = find_start(handles.inputdata);
        if(start_index ~= -1 && length(currentdata)>1)
            data = uint8(currentdata);
-           data2=uint16(zeros(2,1));
-           data2(1)=typecast(data(1:2),'uint16');
-           handles.inputdata(1:start_index+1) = uint8([]); %clear pending data
-           %data2(2)=typecast(data(3:4),'uint16');
-           t = get(handles.plot,'XData');
-           y = get(handles.plot,'YData');
-           y = [y data2(1)];
-           t = [t (t(end)+1)];
-           set(handles.plot,'XData',t,'YData',y);
-           refreshdata(handles.plot,'caller') 
+           data2=uint32(zeros(4,1));
+           data2(1)=typecast(data(start_index:start_index+3),'uint32');
+           if(data2(1)<3300)
+               handles.inputdata = currentdata(start_index+2:end); %clear data we are using
+               %data2(2)=typecast(data(3:4),'uint16');
+               t = get(handles.plot,'XData');
+               y = get(handles.plot,'YData');
+               y = [y data2(1)];
+               t = [t (t(end)+1)];
+               set(handles.plot,'XData',t,'YData',y);
+               refreshdata(handles.plot,'caller')
+           else
+               handles.inputdata = currentdata(start_index+2:end);
+           end
        end
        %drawnow
        % Update handles structure
@@ -145,9 +150,9 @@ end
 function [start_index] = find_start(data)
     start_index = -1;
     index = 1;
-    i = 1;
+    i = 0;
     len = length(data);
-    while(index < len)
+    while(index <= len && start_index == -1)
         switch i
             case 0
                 if(char(data(index)) == '<')
@@ -165,7 +170,7 @@ function [start_index] = find_start(data)
                 index = index+1;
             case 2
                 if(char(data(index)) == '{')
-                    start_index = index;
+                    start_index = index+1;
                 else
                     i = 0;
                     index = index+1;

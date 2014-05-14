@@ -162,7 +162,7 @@ void DMA2_Stream0_IRQHandler(void)
     if(count == decimation)
     {
         USART_puts_chars(USART1,start_packet);
-        USART_puts_ints(USART1, (uint8_t*)ADC3ConvertedVoltages, 2);
+        USART_puts_ints(USART1, (uint8_t*)ADC3ConvertedValues, 4);
         //USART_puts_chars(USART1,sensor2);
         //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);
         //USART_puts_ints(USART1,&linefeed,1);
