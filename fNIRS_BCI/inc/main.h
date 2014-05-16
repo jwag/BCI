@@ -28,18 +28,30 @@
 #include "stm32f4xx_usart.h"
 
 /* Exported types ------------------------------------------------------------*/
+typedef enum
+{
+    LEFT_LED_880,
+    LEFT_LED_940,
+    CENTER_LED_880,
+    CENTER_LED_940,
+    RIGHT_LED_880,
+    RIGHT_LED_940
+} led_t;
+
 /* Exported constants --------------------------------------------------------*/
-#define NUM_SENSORS
+#define NUM_SENSORS 2
+#define BUFFER_SIZE 20
 #define MAX_STRLEN 12 // this is the maximum string length of our string in characters
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 /* Exported variables ------------------------------------------------------- */
-extern __IO uint16_t ADC3ConvertedValues[NUM_SENSORS];
-extern __IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS];
+extern __IO uint16_t ADC3ConvertedValues[];
+extern __IO uint32_t ADC3ConvertedVoltages[];
 void TimingDelay_Decrement(void);
 void init_USART1(uint32_t baudrate);
 void USART_puts_chars(USART_TypeDef* USARTx, volatile char *s);
 void USART_puts_ints(USART_TypeDef* USARTx, uint8_t *data, uint8_t length);
+void set_PWM_duty( uint8_t duty_cycle,led_t led);
 extern volatile char received_string[];
 
 #endif /* __MAIN_H */

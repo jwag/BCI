@@ -21,14 +21,15 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "math.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 // ADC Variables
-__IO uint16_t ADC3ConvertedValues[NUM_SENSORS] = {0xFFFF, 0xFFFF};
-__IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS] = {0xFFFF, 0xFFFF};
+__IO uint16_t ADC3ConvertedValues[NUM_SENSORS*BUFFER_SIZE] = {0};
+__IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS*BUFFER_SIZE] = {0};
 GPIO_InitTypeDef GPIO_InitStructure;
 static __IO uint32_t TimingDelay;
 volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
@@ -64,10 +65,6 @@ int main(void)
   STM_EVAL_LEDInit(LED3);
   STM_EVAL_LEDInit(LED5);
   STM_EVAL_LEDInit(LED6);
-
-  /* Turn on LED4 and LED5 */
-  STM_EVAL_LEDOn(LED4);
-  STM_EVAL_LEDOn(LED5);
 
   init_USART1(9600); // initialize USART1 @ 9600 baud
 
@@ -118,26 +115,23 @@ int main(void)
        - Reload Value is the parameter to be passed for SysTick_Config() function
        - Reload Value should not exceed 0xFFFFFF
    */
-  if (SysTick_Config(SystemCoreClock / 1000))
+  if (SysTick_Config(SystemCoreClock / (6250)))
   {
     /* Capture error */
     while (1);
   }
 
+  static uint8_t duty_cycle = 0;
   while (1)
   {
     /* Toggle LED3 and LED6 */
-    STM_EVAL_LEDToggle(LED3);
-    STM_EVAL_LEDToggle(LED6);
-
-    /* Insert 50 ms delay */
-    Delay(50);
-
-    /* Toggle LED4 and LED5 */
+    //STM_EVAL_LEDToggle(LED3);
+    Delay(100);
     STM_EVAL_LEDToggle(LED4);
+    Delay(100);
+    STM_EVAL_LEDToggle(LED6);
+    Delay(100);
     STM_EVAL_LEDToggle(LED5);
-
-    /* Insert 100 ms delay */
     Delay(100);
   }
 }
@@ -190,7 +184,7 @@ void ADC3_CH12_DMA_Config(void)
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)ADC3_DR_ADDRESS;
   DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&ADC3ConvertedValues[0];
   DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-  DMA_InitStructure.DMA_BufferSize = 2;
+  DMA_InitStructure.DMA_BufferSize = NUM_SENSORS*BUFFER_SIZE;
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
@@ -397,7 +391,58 @@ void PWM_Config()
     /* TIM enable counter */
     TIM_Cmd(TIM4, ENABLE);
 }
+//*********************************************************************************
+void set_PWM_duty( uint8_t duty_cycle,led_t led)
+{
 
+    uint16_t ccr = floor(duty_cycle*89.f);
+    switch (led)
+    {
+        case LEFT_LED_880:
+          {
+              // PC6 LED
+              TIM3->CCR1 = ccr;
+              break;
+          }
+          case LEFT_LED_940:
+          {
+              // PC7 LED
+              TIM3->CCR2 = ccr;
+              break;
+          }
+          case CENTER_LED_880:
+          {
+              // PB0 LED
+              TIM3->CCR3 = ccr;
+              break;
+          }
+          case CENTER_LED_940:
+          {
+              // PB0 LED
+              TIM3->CCR4 = ccr;
+              break;
+          }
+          case RIGHT_LED_880:
+          {
+              // PB8 LED
+              TIM4->CCR3 = ccr;
+              break;
+          }
+          case RIGHT_LED_940:
+          {
+              // PB9 LED
+              TIM4->CCR4 = ccr;
+              break;
+          }
+          default:
+          {
+              break;
+          }
+    }
+
+}
+
+//*******************************************************************************
 /* This funcion initializes the USART1 peripheral
  *
  * Arguments: baudrate --> the baudrate at which the USART is
