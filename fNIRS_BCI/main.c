@@ -129,8 +129,8 @@ int main(void)
   while (1)
   {
     /* Toggle LED3 and LED6 */
-    STM_EVAL_LEDToggle(LED3);
-    Delay(100);
+    //STM_EVAL_LEDToggle(LED3);
+    //Delay(100);
     STM_EVAL_LEDToggle(LED4);
     Delay(100);
     STM_EVAL_LEDToggle(LED6);

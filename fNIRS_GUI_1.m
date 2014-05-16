@@ -56,17 +56,19 @@ function fNIRS_GUI_1_OpeningFcn(hObject, eventdata, handles, varargin)
     y = 0;
     handles.graph = false;
     handles.plot = plot(t,y,'YDataSource','y','XDataSource','t');
-    s1 = serial('COM29','BaudRate',9600,'DataBits',8,'Parity','None','FlowControl','None','StopBits',1);
-    s1.BytesAvailableFcnCount = 40;
-    s1.BytesAvailableFcnMode = 'byte';
-    s1.BytesAvailableFcn = @(src, event) mycallback(src, event, hObject);
-    fopen(s1);
-    handles.serialport = s1;
     handles.inputdata = uint8([]);
     handles.outputdata.t = t;
     handles.outputdata.y = y;
     handles.output = hObject;
     handles.counter = 0;
+    handles.clear_input_flag = false;
+    handles.clear_input_index = 1;
+    s1 = serial('COM29','BaudRate',9600,'DataBits',8,'Parity','None','FlowControl','None','StopBits',1);
+    s1.BytesAvailableFcnCount = 40;
+    s1.BytesAvailableFcnMode = 'byte';
+    s1.BytesAvailableFcn = @(src, event) mycallback(src, event, hObject, handles);
+    handles.serialport = s1;
+    fopen(s1);
     % Update handles structure
     guidata(hObject, handles);
 % UIWAIT makes fNIRS_GUI_1 wait for user response (see UIRESUME)
@@ -90,16 +92,23 @@ function Start_Callback(hObject, eventdata, handles)
     status = get(handles.serialport,'Status');
     handles.inputdata = uint8([]); %clear pending data
     if~strcmp(status,'open')
-        handles.serialport.BytesAvailableFcn = @(src, event) mycallback(src, event, hObject);
+        %handles.serialport.BytesAvailableFcn = @(src, event) mycallback(src, event, hObject,handles);
         fopen(handles.serialport);
     end
     guidata(hObject, handles);
     while handles.graph
+       testdata = handles.inputdata;
        handles = guidata(hObject); %The callback might have changed the values
-       currentdata = handles.inputdata; %read pending data
-       handles.inputdata = [];
+       currentdata = handles.inputdata(handles.clear_input_index:end);
+       %currentdata = handles.inputdata; %read pending data
        t = handles.outputdata.t;
        y = handles.outputdata.y;
+       if handles.clear_input_flag ~= true
+           handles.clear_input_index = length(currentdata)+1;
+           handles.clear_input_flag = true;
+           % Update handles structure
+           guidata(hObject, handles);
+       end
        %now do something with the currentdata
        while ~isempty(currentdata)
            start_index = find_start(currentdata);
@@ -111,7 +120,7 @@ function Start_Callback(hObject, eventdata, handles)
                temp_time = linspace(t(end),t(end)+1,1);
                t = [t temp_time];
                currentdata = currentdata(start_index+2:end);
-               if(handles.counter == 0)
+               if(handles.counter == 10)
                    set(handles.plot,'XData',t,'YData',y);
                    refreshdata(handles.plot,'caller');
                    drawnow;
@@ -121,18 +130,30 @@ function Start_Callback(hObject, eventdata, handles)
                end
            end
        end
-       handles.outputdata.t = t;
-       handles.outputdata.y = y;
+       % Get a new copy of the latest data and publish our changes to the
+       % handles
+       new_handles = guidata(hObject);
+       % we are only using these but we need to get the latest
+       % handles.graph
+       new_handles.outputdata.t = t;
+       new_handles.outputdata.y = y;
+       new_handles.counter = handles.counter;
+       %new_handles.plot = handles.plot;
+       % handles.plot????
        % Update handles structure
-       guidata(hObject, handles);
-       %get updated handles
-       handles = guidata(hObject);
+       guidata(hObject, new_handles);
     end
 end
 
-function mycallback(src, event, FigureObject)
+function mycallback(src, event, FigureObject,handles)
     handles = guidata(FigureObject);
     s1 = handles.serialport;
+    if(handles.clear_input_flag == true)
+        handles.inputdata = handles.inputdata(handles.clear_input_index:end);
+        handles.clear_input_index = 1;
+        handles.clear_input_flag = 0;
+        guidata(FigureObject, handles);
+    end
     if s1.BytesAVailable~=0
         thisdata = fread(s1, s1.BytesAvailable);
         handles.inputdata = [handles.inputdata; uint8(thisdata)];
@@ -151,7 +172,7 @@ function Stop_Callback(hObject, eventdata, handles)
     status = get(handles.serialport,'Status');
     if strcmp(status,'open')
         fclose(handles.serialport);
-        handles.serialport.BytesAvailableFcn = @null;
+        %handles.serialport.BytesAvailableFcn = @null;
     end
     guidata(hObject, handles);
     %handles.output = get(handles.plot,'XData');

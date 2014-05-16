@@ -149,6 +149,7 @@ void SysTick_Handler(void)
         uint32_t size = sizeof(uint16_t);
         USART_puts_ints(USART1,(uint8_t*)&val,size);
         decimation = 0;
+        STM_EVAL_LEDToggle(LED3);
     }
     else
     {
