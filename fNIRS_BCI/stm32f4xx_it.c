@@ -140,7 +140,21 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  TimingDelay_Decrement();
+    static uint32_t decimation = 0;
+    TimingDelay_Decrement();
+    if( decimation == 100)
+    {
+        uint16_t val = avg_voltage[0];
+        USART_puts_chars(USART1,start_packet);
+        uint32_t size = sizeof(uint16_t);
+        USART_puts_ints(USART1,(uint8_t*)&val,size);
+        decimation = 0;
+    }
+    else
+    {
+        decimation++;
+    }
+
 }
 
 void DMA2_Stream0_IRQHandler(void)
@@ -148,8 +162,6 @@ void DMA2_Stream0_IRQHandler(void)
   //Test on DMA1 Channel1 Transfer Complete interrupt
   if(DMA_GetITStatus(DMA2_Stream0,DMA_IT_TCIF0))
   {
-    static volatile uint16_t val = 0;
-    static char volatile start_packet[] = "<({";
     static float conversion = 2980.f/0xFFF;
 
     float sum[NUM_SENSORS] = {};
@@ -164,14 +176,9 @@ void DMA2_Stream0_IRQHandler(void)
         avg_voltage[chan] = avg_value[chan]*conversion;
     }
 
-    val = avg_voltage[0];
      //Clear DMA2 Stream0 Transfer Complete interrupt pending bits
     DMA_ClearITPendingBit(DMA2_Stream0,DMA_IT_TCIF0);
 
-    //STM_EVAL_LEDToggle(LED3);
-    USART_puts_chars(USART1,start_packet);
-    uint32_t size = sizeof(uint16_t);
-    USART_puts_ints(USART1,(uint8_t*)&val,size);
     //USART_puts_chars(USART1, retnum);
     //USART_puts_chars(USART1,sensor2);
     //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);

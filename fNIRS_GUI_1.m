@@ -97,31 +97,35 @@ function Start_Callback(hObject, eventdata, handles)
     while handles.graph
        handles = guidata(hObject); %The callback might have changed the values
        currentdata = handles.inputdata; %read pending data
+       handles.inputdata = [];
+       t = handles.outputdata.t;
+       y = handles.outputdata.y;
        %now do something with the currentdata
-       start_index = find_start(handles.inputdata);
-       if(start_index ~= -1 && length(currentdata)>2+3)
-           data = uint8(currentdata);
-           data2=uint16(zeros(1,1));
-           data2=typecast(data(start_index:start_index+1),'uint16');
-           handles.inputdata = currentdata(start_index+2:end); %clear data we are using
-           t = handles.outputdata.t;
-           y = handles.outputdata.y;
-           y = [y data2'];
-           temp_time = linspace(t(end),t(end)+1,1);
-           t = [t temp_time];
-           handles.outputdata.t = t;
-           handles.outputdata.y = y;
-           handles.inputdata = currentdata(start_index+2:end);
-           if(handles.counter == 100)
-               set(handles.plot,'XData',t,'YData',y);
-               refreshdata(handles.plot,'caller')
-           else
-               handles.counter = handles.counter+1;
+       while ~isempty(currentdata)
+           start_index = find_start(currentdata);
+           if(start_index ~= -1 && length(currentdata)>=2+3)
+               data = uint8(currentdata);
+               data2=uint16(zeros(1,1));
+               data2=typecast(data(start_index:start_index+1),'uint16');
+               y = [y data2'];
+               temp_time = linspace(t(end),t(end)+1,1);
+               t = [t temp_time];
+               currentdata = currentdata(start_index+2:end);
+               if(handles.counter == 1)
+                   set(handles.plot,'XData',t,'YData',y);
+                   refreshdata(handles.plot,'caller')
+                   handles.counter = 0;
+               else
+                   handles.counter = handles.counter+1;
+               end
            end
        end
-       %drawnow
+       handles.outputdata.t = t;
+       handles.outputdata.y = y;
+       drawnow;
        % Update handles structure
        guidata(hObject, handles);
+       %get updated handles
        handles = guidata(hObject);
     end
 end
@@ -129,9 +133,11 @@ end
 function mycallback(src, event, FigureObject)
     handles = guidata(FigureObject);
     s1 = handles.serialport;
-    thisdata = fread(s1, s1.BytesAvailable);
-    handles.inputdata = [handles.inputdata; uint8(thisdata)];
-    guidata(FigureObject, handles);
+    if s1.BytesAVailable~=0
+        thisdata = fread(s1, s1.BytesAvailable);
+        handles.inputdata = [handles.inputdata; uint8(thisdata)];
+        guidata(FigureObject, handles);
+    end
 end
 
 
@@ -141,7 +147,7 @@ function Stop_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
     handles.graph = false;
-    pause(.2);
+    guidata(hObject, handles);
     status = get(handles.serialport,'Status');
     if strcmp(status,'open')
         fclose(handles.serialport);

@@ -54,6 +54,7 @@ void USART_puts_chars(USART_TypeDef* USARTx, volatile char *s);
 void USART_puts_ints(USART_TypeDef* USARTx, uint8_t *data, uint8_t length);
 void set_PWM_duty( uint8_t duty_cycle,led_t led);
 extern volatile char received_string[];
+extern char volatile start_packet[];
 
 #endif /* __MAIN_H */
 

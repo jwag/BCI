@@ -34,6 +34,9 @@ __IO uint16_t avg_voltage[NUM_SENSORS] = {};
 GPIO_InitTypeDef GPIO_InitStructure;
 static __IO uint32_t TimingDelay;
 volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
+
+char volatile start_packet[] = "<({";
+
 // PWM Setup Constants
 TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 TIM_OCInitTypeDef  TIM_OCInitStructure;
@@ -126,7 +129,7 @@ int main(void)
   while (1)
   {
     /* Toggle LED3 and LED6 */
-    //STM_EVAL_LEDToggle(LED3);
+    STM_EVAL_LEDToggle(LED3);
     Delay(100);
     STM_EVAL_LEDToggle(LED4);
     Delay(100);
