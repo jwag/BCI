@@ -148,54 +148,34 @@ void DMA2_Stream0_IRQHandler(void)
   //Test on DMA1 Channel1 Transfer Complete interrupt
   if(DMA_GetITStatus(DMA2_Stream0,DMA_IT_TCIF0))
   {
-    /* convert the ADC value (from 0 to 0xFFF) to a voltage value (from 0V to 3.3V)*/
-    ADC3ConvertedVoltages[0] = ADC3ConvertedValues[0] *2980/0xFFF;
-    ADC3ConvertedVoltages[1] = ADC3ConvertedValues[1] *2980/0xFFF;
+    static volatile uint16_t val = 0;
+    static char volatile start_packet[] = "<({";
+    static float conversion = 2980.f/0xFFF;
+
+    float sum[NUM_SENSORS] = {};
+    // Average measurements for each channel
+    for(uint8_t chan = 0; chan < NUM_SENSORS; chan++)
+    {
+        for(uint8_t sample = 0; sample < BUFFER_SIZE; sample++)
+        {
+            sum[chan] += ADC3ConvertedValues[(sample*NUM_SENSORS+chan)];
+        }
+        avg_value[chan] = sum[chan]/BUFFER_SIZE;
+        avg_voltage[chan] = avg_value[chan]*conversion;
+    }
+
+    val = avg_voltage[0];
      //Clear DMA2 Stream0 Transfer Complete interrupt pending bits
     DMA_ClearITPendingBit(DMA2_Stream0,DMA_IT_TCIF0);
 
-    STM_EVAL_LEDToggle(LED3);
-    static volatile uint16_t val = 0;
-    static uint16_t val1 = 0;
-    static char sensor1[] = "SENSOR1  ";
-    static char sensor2[] = "SENSOR2  ";
-    static char volatile start_packet[] = "<({";
-    static uint8_t decimation = 100;
-    static uint8_t count = 0;
-    static uint8_t count2 = 10;
-    static char retnum[2];
-    //USART_puts_chars(USART1,sensor1);
-    if(count == decimation)
-    {
-        if(count2 == 10)
-        {
-            USART_puts_chars(USART1,start_packet);
-            count2 = 0;
-        }
-        else
-        {
-            count2++;
-        }
-        uint32_t size = sizeof(uint16_t);
-        //sprintf( retnum, "%u", ADC3ConvertedValues[0] );
-        uint16_t test = 350;
-        uint8_t * test_ptr = (uint8_t*)&test;
-        val = ADC3ConvertedVoltages[0];
-        USART_puts_ints(USART1,(uint8_t*)&val,size);
-        val1=val1+100;
-        if(val1 >= 65000)
-        {
-          val1 = 0;
-        }
-        //USART_puts_chars(USART1, retnum);
-        //USART_puts_chars(USART1,sensor2);
-        //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);
-        //USART_puts_ints(USART1,&linefeed,1);
-        count = 0;
-    }
-    else
-    { count++; }
-
+    //STM_EVAL_LEDToggle(LED3);
+    USART_puts_chars(USART1,start_packet);
+    uint32_t size = sizeof(uint16_t);
+    USART_puts_ints(USART1,(uint8_t*)&val,size);
+    //USART_puts_chars(USART1, retnum);
+    //USART_puts_chars(USART1,sensor2);
+    //USART_puts_ints(USART1, (uint8_t*)&ADC3ConvertedVoltages[1], 2);
+    //USART_puts_ints(USART1,&linefeed,1);
   }
 }
 

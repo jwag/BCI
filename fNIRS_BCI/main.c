@@ -28,8 +28,9 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 // ADC Variables
-__IO uint16_t ADC3ConvertedValues[NUM_SENSORS*BUFFER_SIZE] = {0};
-__IO uint32_t ADC3ConvertedVoltages[NUM_SENSORS*BUFFER_SIZE] = {0};
+__IO uint16_t ADC3ConvertedValues[NUM_SENSORS*BUFFER_SIZE] = {};
+__IO uint16_t avg_value[NUM_SENSORS] = {};
+__IO uint16_t avg_voltage[NUM_SENSORS] = {};
 GPIO_InitTypeDef GPIO_InitStructure;
 static __IO uint32_t TimingDelay;
 volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string

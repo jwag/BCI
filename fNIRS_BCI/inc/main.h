@@ -40,13 +40,14 @@ typedef enum
 
 /* Exported constants --------------------------------------------------------*/
 #define NUM_SENSORS 2
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 100
 #define MAX_STRLEN 12 // this is the maximum string length of our string in characters
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 /* Exported variables ------------------------------------------------------- */
 extern __IO uint16_t ADC3ConvertedValues[];
-extern __IO uint32_t ADC3ConvertedVoltages[];
+extern __IO uint16_t avg_value[NUM_SENSORS];
+extern __IO uint16_t avg_voltage[NUM_SENSORS];
 void TimingDelay_Decrement(void);
 void init_USART1(uint32_t baudrate);
 void USART_puts_chars(USART_TypeDef* USARTx, volatile char *s);

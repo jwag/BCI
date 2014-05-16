@@ -63,6 +63,8 @@ function fNIRS_GUI_1_OpeningFcn(hObject, eventdata, handles, varargin)
     fopen(s1);
     handles.serialport = s1;
     handles.inputdata = uint8([]);
+    handles.outputdata.t = t;
+    handles.outputdata.y = y;
     handles.output = hObject;
     handles.counter = 0;
     % Update handles structure
@@ -93,27 +95,27 @@ function Start_Callback(hObject, eventdata, handles)
     end
     guidata(hObject, handles);
     while handles.graph
-       pause(.1); %give callback a chance to read some data
        handles = guidata(hObject); %The callback might have changed the values
        currentdata = handles.inputdata; %read pending data
        %now do something with the currentdata
        start_index = find_start(handles.inputdata);
-       if(start_index ~= -1 && length(currentdata)>23)
-           if(handles.counter == 10)
-               data = uint8(currentdata);
-               data2=uint16(zeros(10,1));
-               data2=typecast(data(start_index:start_index+19),'uint16');
-               handles.inputdata = currentdata(start_index+20:end); %clear data we are using
-               %data2(2)=typecast(data(3:4),'uint16');
-               t = get(handles.plot,'XData');
-               y = get(handles.plot,'YData');
-               y = [y data2'];
-               temp_time = linspace(t(end),t(end)+9,10);
-               t = [t temp_time];
+       if(start_index ~= -1 && length(currentdata)>2+3)
+           data = uint8(currentdata);
+           data2=uint16(zeros(1,1));
+           data2=typecast(data(start_index:start_index+1),'uint16');
+           handles.inputdata = currentdata(start_index+2:end); %clear data we are using
+           t = handles.outputdata.t;
+           y = handles.outputdata.y;
+           y = [y data2'];
+           temp_time = linspace(t(end),t(end)+1,1);
+           t = [t temp_time];
+           handles.outputdata.t = t;
+           handles.outputdata.y = y;
+           handles.inputdata = currentdata(start_index+2:end);
+           if(handles.counter == 100)
                set(handles.plot,'XData',t,'YData',y);
                refreshdata(handles.plot,'caller')
            else
-               handles.inputdata = currentdata(start_index+10:end);
                handles.counter = handles.counter+1;
            end
        end
