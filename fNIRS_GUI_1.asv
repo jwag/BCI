@@ -113,9 +113,9 @@ function Start_Callback(hObject, eventdata, handles)
                currentdata = currentdata(start_index+2:end);
                if(handles.counter == 0)
                    set(handles.plot,'XData',t,'YData',y);
-                   refreshdata(handles.plot,'caller');
-                   drawnow;
+                   refreshdata(handles.plot,'caller')
                    handles.counter = 0;
+                   drawnow;
                else
                    handles.counter = handles.counter+1;
                end
