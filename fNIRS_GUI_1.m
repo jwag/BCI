@@ -120,7 +120,7 @@ function Start_Callback(hObject, eventdata, handles)
                temp_time = linspace(t(end),t(end)+1,1);
                t = [t temp_time];
                currentdata = currentdata(start_index+2:end);
-               if(handles.counter == 10)
+               if(handles.counter == 0)
                    set(handles.plot,'XData',t,'YData',y);
                    refreshdata(handles.plot,'caller');
                    drawnow;

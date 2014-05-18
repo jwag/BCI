@@ -125,6 +125,7 @@ int main(void)
     while (1);
   }
 
+  set_PWM_duty( 75, LEFT_LED_880);
   static uint8_t duty_cycle = 0;
   while (1)
   {
